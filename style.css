@@ -1,0 +1,10 @@
+body {
+    background-color: black;
+}
+
+#app {
+    /* width: 500px; */
+    /* height: 500px; */
+    background-color: white;
+    cursor: pointer;
+}
