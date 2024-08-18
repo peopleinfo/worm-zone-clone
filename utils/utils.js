@@ -13,3 +13,31 @@ function formatDataForLoad(drawing) {
 
     return { lines };
 }
+
+function isCollided(circle1, circle2) {
+    let eps = 2;
+
+    if (
+        circle1.x + circle1.radius - eps > circle2.x - circle2.radius &&
+        circle1.y + circle1.radius - eps > circle2.y - circle2.radius &&
+        circle1.x - circle1.radius + eps < circle2.x + circle2.radius &&
+        circle1.y - circle1.radius + eps < circle2.y + circle2.radius
+    ) {
+        return true;
+    }
+}
+
+
+function getRandomColor() {
+    const colors = ['red', 'green', 'blue', 'white', 'yellow', 'orange', 'purple', 'lightgreen', 'grey'];
+    const randInd = Math.floor(Math.random() * colors.length);
+    return colors[randInd];
+}
+
+
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+
+const getRandX = () => Math.random() * canvas.width;
+const getRandY = () => Math.random() * canvas.height;

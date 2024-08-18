@@ -1,13 +1,29 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+
 body {
     background-color: black;
+    color: white;
 }
 
 #app {
     background-color: black;
-    border: 1px solid gray;
+    border: 1px solid white;
     cursor: pointer;
+    /* width: 100vw; */
+    /* height: 100vh; */
 }
 
 .controls {
     user-select: none;
+}
+
+.meta {
+    display:  flex;
+    gap: 100px;
 }

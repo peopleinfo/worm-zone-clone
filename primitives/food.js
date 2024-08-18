@@ -1,7 +1,7 @@
-let i = 0;
 
 class Food {
-    constructor(radius = 10) {
+    static i = 0;
+    constructor(radius = defRad) {
         this.x = getRandX();
         this.y = getRandY();
         this.radius = radius;
@@ -14,15 +14,16 @@ class Food {
         this.color = getRandomColor();
     }
 
-    draw(ctx) {
+    animate(){
+        this.radius = lerp(this.radius * 0.8, this.radius, ++Food.i / this.radius);
+        Food.i %= 17;        
+    }
+
+    draw(ctx, color) {
+        // this.animate();
         ctx.beginPath();
-        ctx.fillStyle = this.color;
-        // ctx.moveTo(this.x, this.y);
-        // ctx.lineWidth = 1
-        this.radius = lerp(this.radius * 0.8, this.radius, ++i / this.radius);
+        ctx.fillStyle = color || this.color;
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
-        i %= 17;
     }
 }
