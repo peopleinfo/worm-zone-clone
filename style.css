@@ -27,7 +27,8 @@ body {
     display:  flex;
     gap: 100px;
     position: absolute;
-    bottom: 0;
+    top: 0;
     background: #333;
     opacity: 0.5;
+    font-size: 1.35rem;
 }
