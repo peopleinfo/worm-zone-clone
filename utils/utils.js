@@ -17,14 +17,19 @@ function formatDataForLoad(drawing) {
 function isCollided(circle1, circle2) {
     let eps = 2;
 
-    if (
-        circle1.x + circle1.radius - eps > circle2.x - circle2.radius &&
-        circle1.y + circle1.radius - eps > circle2.y - circle2.radius &&
-        circle1.x - circle1.radius + eps < circle2.x + circle2.radius &&
-        circle1.y - circle1.radius + eps < circle2.y + circle2.radius
-    ) {
-        return true;
-    }
+    // if (
+    //     circle1.x + circle1.radius - eps > circle2.x - circle2.radius &&
+    //     circle1.y + circle1.radius - eps > circle2.y - circle2.radius &&
+    //     circle1.x - circle1.radius + eps < circle2.x + circle2.radius &&
+    //     circle1.y - circle1.radius + eps < circle2.y + circle2.radius
+    // ) {
+    //     return true;
+    // }
+
+    const distance = Math.hypot(circle1.x - circle2.x, circle1.y - circle2.y);
+    return distance < circle1.radius + circle2.radius;
+
+
 }
 
 

@@ -26,4 +26,8 @@ body {
 .meta {
     display:  flex;
     gap: 100px;
+    position: absolute;
+    bottom: 0;
+    background: #333;
+    opacity: 0.5;
 }

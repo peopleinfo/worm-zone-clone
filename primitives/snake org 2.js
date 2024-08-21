@@ -9,21 +9,65 @@ class Snake {
         }
     }
 
-    constructor(x = 0, y = 0, length = 25, color = "red") {
+    constructor(x = 0, y = 0, length = 50, color = "red") {
         this.radius = 4;
-        this.speed = 1.3;
-        this.turningSpeed = 7;
+        this.speed = 0.7;
         this.points = [new Point(x, y, this.radius, getRandomColor())];
         this.velocity = { x: 1, y: 0 };
         this.overPos = { x: 0, y: 0 };
         this.color = getRandomColor();
         this.fatScaler = 0.001;
         this.angle = 0;
-        this.ai = true;
+        this.turningSpeed = 18;
 
         for (let i = 1; i < length; i++) {
             this.points.push(new Point(INFINITY, INFINITY, this.radius, getRandomColor()));
         }
+    }
+
+    //dd
+    moveLeft() {
+        if (this.angle == 180) return;
+        else if (this.angle < 180) {
+            this.angle = Math.abs(this.angle + this.turningSpeed) % 360;
+        } else {
+            this.angle = Math.abs(this.angle - this.turningSpeed) % 360;
+        }
+    }
+    moveRight() {
+        if (this.angle == 0) return;
+        else if (this.angle < 180) {
+            this.angle = Math.abs(this.angle - this.turningSpeed) % 360;
+        } else {
+            this.angle = Math.abs(this.angle + this.turningSpeed) % 360;
+        }
+    }
+    moveUp() {
+        if (this.angle == 90) return;
+        else if (this.angle > 90) {
+            this.angle = Math.abs(this.angle - this.turningSpeed) % 360;
+        } else {
+            this.angle = Math.abs(this.angle + this.turningSpeed) % 360;
+        }
+    }
+    moveDown() {
+        if (this.angle == 270) return;
+        else if (this.angle > 270) {
+            this.angle = Math.abs(this.angle - this.turningSpeed) % 360;
+        } else {
+            this.angle = Math.abs(this.angle + this.turningSpeed) % 360;
+        }
+    }
+
+    moveRand() {
+        const actions = [
+            this.moveUp,
+            this.moveDown,
+            this.moveLeft,
+            this.moveRight,
+        ];
+        const ind = Math.floor(Math.random() * 4);
+        actions[ind].bind(this)();
     }
 
     eat(color = 'red') {
@@ -37,36 +81,11 @@ class Snake {
         return this.points[0] ?? this.overPos;
     }
 
-    calculateTargetAngleWithControls() {
-        let targetAngle = this.angle;
-
-        if (keys.up && keys.right) targetAngle = 45;
-        else if (keys.up && keys.left) targetAngle = 90 + 45;
-        else if (keys.down && keys.right) targetAngle = 270 + 45;
-        else if (keys.down && keys.left) targetAngle = 270 - 45;
-        else if (keys.up) targetAngle = 90;
-        else if (keys.down) targetAngle = 270;
-        else if (keys.left) targetAngle = 180;
-        else if (keys.right) targetAngle = 0;
-
-        return targetAngle;
-    }
-
-    calculateTargetAngleRandomly() {
-        return [0, 45, 90, 135, 180, 225, 270, 315, 360][Math.floor(Math.random() * 8)];
-    }
-
     move() {
-        const targetAngle = this.ai ? this.calculateTargetAngleRandomly() : this.calculateTargetAngleWithControls();
-        this.updateAngle(targetAngle);
+        this.velocity = { x: Math.cos(this.angle * coeffD2R), y: Math.sin(this.angle * coeffD2R) };
 
-        this.velocity = {
-            x: Math.cos(this.angle * coeffD2R),
-            y: Math.sin(this.angle * -coeffD2R)
-        };
-
-        const headX = (this.getHead().x + this.speed * this.velocity.x);
-        const headY = (this.getHead().y + this.speed * this.velocity.y);
+        const headX = (this.getHead().x + 2 * this.speed * this.velocity.x);
+        const headY = (this.getHead().y + 2 * this.speed * this.velocity.y);
 
         const head = new Point(headX, headY, this.getHead().radius, this.getHead().color);
 
@@ -74,41 +93,27 @@ class Snake {
         this.points.pop();
     }
 
-    updateAngle(targetAngle) {
-        let deltaAngle = (targetAngle - this.angle) % 360;
-        if (deltaAngle > 180) deltaAngle -= 360;
-        if (deltaAngle < -180) deltaAngle += 360;
+    cutIfCollidedWithSelf() {       // TODO: fix this logic
+        const cutPointIndex = this.getIndexIfCollidedWithSelf(this.points);
+        if (cutPointIndex == -1) return;
 
-        if (deltaAngle > 0) {
-            this.angle = (this.angle + Math.min(this.turningSpeed, deltaAngle)) % 360;
-        } else if (deltaAngle < 0) {
-            this.angle = (this.angle - Math.min(this.turningSpeed, -deltaAngle)) % 360;
-        }
+        const cutPoints = this.points.filter((p, i) => {
+            return this.points.indexOf(p) >= cutPointIndex;
+        });
 
-        if (this.angle < 0) this.angle += 360;
+        const latestDeadPoints = cutPoints.map(p => new Point(p.x, p.y, p.radius, getRandomColor()));
+        Snake.deadPoints.push(...latestDeadPoints);
+
+        this.points.length = cutPointIndex;
     }
 
-    // cutIfCollidedWithSelf() {       // TODO: fix this logic
-    //     const cutPointIndex = this.getIndexIfCollidedWithSelf(this.points);
-    //     if (cutPointIndex == -1) return;
+    getIndexIfCollidedWithSelf(points) {
+        return points.findIndex(point => {
+            if (point == this.getHead()) return false;
 
-    //     const cutPoints = this.points.filter((p, i) => {
-    //         return this.points.indexOf(p) >= cutPointIndex;
-    //     });
-
-    //     const latestDeadPoints = cutPoints.map(p => new Point(p.x, p.y, p.radius, getRandomColor()));
-    //     Snake.deadPoints.push(...latestDeadPoints);
-
-    //     this.points.length = cutPointIndex;
-    // }
-
-    // getIndexIfCollidedWithSelf(points) {
-    //     return points.findIndex(point => {
-    //         if (point == this.getHead()) return false;
-
-    //         // if (isCollided(this.getHead(), point)) return point;     // TODO: fix this logic
-    //     });
-    // }
+            // if (isCollided(this.getHead(), point)) return point;     // TODO: fix this logic
+        });
+    }
 
     checkCollisionsWithFood(point) {            // this to food || this to deadpoints collisions
         const head = this.getHead();
@@ -226,9 +231,10 @@ class Snake {
 
         ctx.fillStyle = "red";
         ctx.beginPath();
+        const angle = this.velocity.x ? 0 : Math.PI / 2;
         const max = this.radius / 2;
         const min = this.radius / 8;
-        ctx.ellipse(mouth.x, mouth.y, min, max, -this.angle * Math.PI / 180, 0, Math.PI * 2);
+        ctx.ellipse(mouth.x, mouth.y, min, max, angle, 0, Math.PI * 2);
         ctx.fill();
     }
 
