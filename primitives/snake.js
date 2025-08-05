@@ -148,6 +148,17 @@ class Snake {
         const head = this.getHead();
         this.overPos.x = head.x;
         this.overPos.y = head.y;
+        
+        // Show game over popup if this is the player's snake
+        if (this === mySnake) {
+            showGameOverPopup();
+        }
+        
+        // Notify multiplayer client if this is the local player
+        if (typeof multiplayerClient !== 'undefined' && multiplayerClient.isConnected && this === mySnake) {
+            multiplayerClient.sendPlayerDeath(this);
+        }
+        
         this.points.length = 0;
     }
 

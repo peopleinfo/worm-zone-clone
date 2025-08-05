@@ -6,6 +6,7 @@ class Food {
         this.y = getRandY();
         this.radius = radius;
         this.color = getRandomColor();
+        this.id = Math.random().toString(36).substr(2, 9); // Generate unique ID
     }
 
     regenerate() {

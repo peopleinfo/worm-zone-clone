@@ -23,6 +23,21 @@
         <div>rank: <span id="rankEle">0</span></div>
         <div>score: <span id="scoreEle">0</span></div>
         <div>snakes: <span id="snakesEle">0</span></div>
+        <div>mode: <span id="modeEle">Multiplayer</span></div>
+        <div>status: <span id="statusEle">Connecting...</span></div>
+    </div>
+
+    <!-- Game Over Popup -->
+    <div id="gameOverPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h2>Game Over!</h2>
+            <div class="score-display">
+                <p>Your Score: <span id="finalScore">0</span></p>
+                <p>Your Rank: <span id="finalRank">0</span></p>
+            </div>
+            <button id="restartBtn" class="restart-button">Restart Game</button>
+            <p class="hint-text">Press SPACE to restart quickly</p>
+        </div>
     </div>
 
     <script src="./primitives/point.js"></script>
@@ -30,7 +45,17 @@
     <script src="./primitives/food.js"></script>
     <script src="./utils/utils.js"></script>
     <script src="./primitives/joypad.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./multiplayer/client.js"></script>
     <script src="./index.js"></script>
+    <script>
+        // Initialize multiplayer connection after all scripts are loaded
+        window.addEventListener('load', function() {
+            if (typeof isMultiplayer !== 'undefined' && isMultiplayer && typeof multiplayerClient !== 'undefined') {
+                multiplayerClient.connect();
+            }
+        });
+    </script>
 </body>
 
 </html>

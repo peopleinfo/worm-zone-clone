@@ -30,6 +30,10 @@ let mySnake = new Snake(canvas.width / 2, canvas.height / 2);
 mySnake.ai = false;
 snakes.push(mySnake);
 
+// Multiplayer variables
+let isMultiplayer = true;
+let otherPlayers = [];
+
 
 
 
@@ -72,25 +76,70 @@ function animate() {
 
     drawBoundary(ctx);
 
-    snakes.forEach(s => {
-        s.move();
-
-        // s.cutIfCollidedWithSelf();       // TODO: fix this logic
-        s.checkCollisionsWithBoundary();
-
-        snakes.forEach(function (s2) {
-            s2.checkCollisionsWidthOtherSnakes(s);
-        });
-
+    // Handle local player (mySnake)
+    if (mySnake.points.length > 0) {
+        mySnake.move();
+        mySnake.checkCollisionsWithBoundary();
+        
+        // Check collisions with other players
+        if (isMultiplayer) {
+            otherPlayers.forEach(otherPlayer => {
+                mySnake.checkCollisionsWidthOtherSnakes(otherPlayer);
+            });
+            
+            // Send player update to server
+            if (multiplayerClient && multiplayerClient.isConnected) {
+                multiplayerClient.sendPlayerUpdate(mySnake);
+            }
+        }
+        
+        // Check food collisions
         foods.forEach(food => {
-            const res = s.checkCollisionsWithFood(food);
-            if (res) food.regenerate();
+            const res = mySnake.checkCollisionsWithFood(food);
+            if (res) {
+                if (isMultiplayer && multiplayerClient && multiplayerClient.isConnected) {
+                    multiplayerClient.sendFoodEaten(food.id);
+                } else {
+                    food.regenerate();
+                }
+            }
         });
 
-        Snake.deadPoints = Snake.deadPoints.filter(p => !s.checkCollisionsWithFood(p));
-
-        s.draw(ctx);
-    });
+        // Check dead points collisions
+        Snake.deadPoints = Snake.deadPoints.filter(p => !mySnake.checkCollisionsWithFood(p));
+        
+        mySnake.draw(ctx);
+    }
+    
+    // Handle AI snakes (only in single player mode)
+    if (!isMultiplayer) {
+        snakes.forEach(s => {
+            if (s !== mySnake) {
+                s.move();
+                s.checkCollisionsWithBoundary();
+                
+                snakes.forEach(function (s2) {
+                    s2.checkCollisionsWidthOtherSnakes(s);
+                });
+                
+                foods.forEach(food => {
+                    const res = s.checkCollisionsWithFood(food);
+                    if (res) food.regenerate();
+                });
+                
+                Snake.deadPoints = Snake.deadPoints.filter(p => !s.checkCollisionsWithFood(p));
+                s.draw(ctx);
+            }
+        });
+    } else {
+        // Draw other multiplayer players
+        if (multiplayerClient && multiplayerClient.isConnected) {
+            otherPlayers = multiplayerClient.getOtherPlayers();
+            otherPlayers.forEach(player => {
+                player.draw(ctx);
+            });
+        }
+    }
 
     foods.forEach(food => food.draw(ctx));
     Snake.drawDeadpoints(ctx);
@@ -104,15 +153,26 @@ function animate() {
 animate();
 
 setInterval(() => {
-    spawnSnake();
-    const ind = snakes.findIndex(s => s.points.length == 0);
-    if (ind !== -1) snakes.splice(ind, 1);
-    snakesEle.innerText = snakes.length;
+    if (!isMultiplayer) {
+        spawnSnake();
+        const ind = snakes.findIndex(s => s.points.length == 0);
+        if (ind !== -1) snakes.splice(ind, 1);
+        snakesEle.innerText = snakes.length;
+        
+        const tSnakes = [...snakes];
+        tSnakes.sort((a, b) => b.points.length - a.points.length);
+        rankEle.innerText = tSnakes.findIndex(snake => snake == mySnake) + 1;
+    } else {
+        // In multiplayer mode, player count is updated via WebSocket
+        // Rank calculation with other players
+        if (multiplayerClient && multiplayerClient.isConnected) {
+            const allPlayers = [mySnake, ...otherPlayers].filter(p => p.points.length > 0);
+            allPlayers.sort((a, b) => b.points.length - a.points.length);
+            rankEle.innerText = allPlayers.findIndex(player => player === mySnake) + 1;
+        }
+    }
+    
     scoreEle.innerText = mySnake.points.length;
-
-    const tSnakes = [...snakes];
-    tSnakes.sort((a, b) => b.points.length - a.points.length);
-    rankEle.innerText = tSnakes.findIndex(snake => snake == mySnake) + 1;
 }, 1200);
 
 
@@ -129,3 +189,65 @@ window.onkeyup = e => {
     if (e.code == 'ArrowLeft') keys.left = false;
     if (e.code == 'ArrowRight') keys.right = false;
 };
+
+// Game Over Popup Functions
+function showGameOverPopup() {
+    const popup = document.getElementById('gameOverPopup');
+    const finalScore = document.getElementById('finalScore');
+    const finalRank = document.getElementById('finalRank');
+    
+    // Update popup with current score and rank
+    finalScore.textContent = mySnake.points.length;
+    finalRank.textContent = document.getElementById('rankEle').textContent;
+    
+    // Show the popup
+    popup.style.display = 'flex';
+}
+
+function hideGameOverPopup() {
+    const popup = document.getElementById('gameOverPopup');
+    popup.style.display = 'none';
+}
+
+function restartGame() {
+    // Hide the popup
+    hideGameOverPopup();
+    
+    // Reset the snake
+    const snakeIndex = snakes.indexOf(mySnake);
+    if (snakeIndex !== -1) {
+        snakes.splice(snakeIndex, 1);
+    }
+    
+    // Create new snake
+    mySnake = new Snake(canvas.width / 2, canvas.height / 2);
+    mySnake.ai = false;
+    snakes.push(mySnake);
+    
+    // Reconnect joypad to new snake
+    joypad.connectWith(mySnake);
+    
+    // Clear dead points
+    Snake.deadPoints = [];
+    
+    // Reset UI elements
+    document.getElementById('scoreEle').textContent = '0';
+    document.getElementById('rankEle').textContent = '1';
+}
+
+// Add event listener for restart button
+document.addEventListener('DOMContentLoaded', function() {
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartGame);
+    }
+});
+
+// Also allow restarting with spacebar when popup is visible
+window.addEventListener('keydown', function(e) {
+    const popup = document.getElementById('gameOverPopup');
+    if (popup && popup.style.display === 'flex' && e.code === 'Space') {
+        e.preventDefault();
+        restartGame();
+    }
+});
