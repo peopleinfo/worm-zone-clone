@@ -198,20 +198,18 @@ io.on('connection', (socket) => {
     for (const [playerId, player] of gameState.players.entries()) {
       if (player.socketId === socket.id) {
         disconnectedPlayerId = playerId;
-        break;
       }
     }
-    
     if (disconnectedPlayerId) {
       gameState.players.delete(disconnectedPlayerId);
-      
-      // Broadcast player left
+      io.emit('playerDisconnected', disconnectedPlayerId);
       socket.broadcast.emit('playerLeft', {
         playerId: disconnectedPlayerId
       });
     }
   });
 });
+
 
 // Clean up dead points periodically
 setInterval(() => {
