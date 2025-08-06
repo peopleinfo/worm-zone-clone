@@ -1,5 +1,5 @@
 {
-  "name": "worm-zone-multiplayer",
+  "name": "worm-zone-api",
   "version": "1.0.0",
   "description": "Multiplayer worm zone game with real-time communication",
   "main": "server.js",
@@ -15,6 +15,5 @@
     "nodemon": "^3.0.1"
   },
   "keywords": ["multiplayer", "game", "websocket", "realtime"],
-  "author": "",
-  "license": "MIT"
+  "author": ""
 }
