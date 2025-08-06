@@ -34,5 +34,4 @@ ehthumbs.db
 Thumbs.db
 
 # Multiplayer server and client files
-server.js
 multiplayer/client.js
