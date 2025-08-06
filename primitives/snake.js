@@ -142,6 +142,28 @@ class Snake {
     }
 
     over() {
+        // Prevent multiple death calls
+        if (this.points.length === 0) return;
+        
+        // Store final score before clearing points
+        const finalScore = this.points.length;
+        
+        // Calculate final rank before death
+        let finalRank = 1;
+        if (this === mySnake) {
+            if (isMultiplayer && multiplayerClient && multiplayerClient.isConnected) {
+                // In multiplayer: compare with other players
+                const allPlayers = [mySnake, ...otherPlayers].filter(p => p.points && p.points.length > 0);
+                allPlayers.sort((a, b) => b.points.length - a.points.length);
+                finalRank = allPlayers.findIndex(player => player === mySnake) + 1;
+            } else {
+                // In single player: compare with AI snakes
+                const allSnakes = [...snakes].filter(s => s.points.length > 0);
+                allSnakes.sort((a, b) => b.points.length - a.points.length);
+                finalRank = allSnakes.findIndex(snake => snake === mySnake) + 1;
+            }
+        }
+        
         const latestDeadPoints = this.points.map(p => new Point(p.x, p.y, defRad, getRandomColor()));
         Snake.deadPoints.push(...latestDeadPoints);
 
@@ -149,8 +171,15 @@ class Snake {
         this.overPos.x = head.x;
         this.overPos.y = head.y;
         
+        // Clear points first to prevent further collision detection
+        this.points.length = 0;
+        
         // Show game over popup if this is the player's snake
         if (this === mySnake) {
+            console.log('You died!');
+            // Store the final score and rank for the popup
+            this.finalScore = finalScore;
+            this.finalRank = finalRank;
             showGameOverPopup();
         }
         
@@ -158,8 +187,6 @@ class Snake {
         if (typeof multiplayerClient !== 'undefined' && multiplayerClient.isConnected && this === mySnake) {
             multiplayerClient.sendPlayerDeath(this);
         }
-        
-        this.points.length = 0;
     }
 
     draw(ctx) {

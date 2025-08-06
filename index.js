@@ -31,8 +31,14 @@ mySnake.ai = false;
 snakes.push(mySnake);
 
 // Multiplayer variables
-let isMultiplayer = true;
+let isMultiplayer = true; // Enable multiplayer mode for socket connections
 let otherPlayers = [];
+
+// UI element references
+const snakesEle = document.getElementById('snakesEle');
+const rankEle = document.getElementById('rankEle');
+const scoreEle = document.getElementById('scoreEle');
+const statusEle = document.getElementById('statusEle');
 
 
 
@@ -63,6 +69,9 @@ function drawBoundary(ctx, lineWidth = 10) {
 const joypad = new Joypad();
 joypad.connectWith(mySnake);
 
+// Game state management
+let isGamePaused = false;
+
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -77,7 +86,7 @@ function animate() {
     drawBoundary(ctx);
 
     // Handle local player (mySnake)
-    if (mySnake.points.length > 0) {
+    if (mySnake.points.length > 0 && !isGamePaused) {
         mySnake.move();
         mySnake.checkCollisionsWithBoundary();
         
@@ -177,6 +186,7 @@ setInterval(() => {
 
 
 window.onkeydown = e => {
+    if (isGamePaused) return; // Prevent input when game is paused
     if (e.code == 'ArrowUp') keys.up = true;
     if (e.code == 'ArrowDown') keys.down = true;
     if (e.code == 'ArrowLeft') keys.left = true;
@@ -184,6 +194,7 @@ window.onkeydown = e => {
 };
 
 window.onkeyup = e => {
+    if (isGamePaused) return; // Prevent input when game is paused
     if (e.code == 'ArrowUp') keys.up = false;
     if (e.code == 'ArrowDown') keys.down = false;
     if (e.code == 'ArrowLeft') keys.left = false;
@@ -193,12 +204,15 @@ window.onkeyup = e => {
 // Game Over Popup Functions
 function showGameOverPopup() {
     const popup = document.getElementById('gameOverPopup');
-    const finalScore = document.getElementById('finalScore');
-    const finalRank = document.getElementById('finalRank');
+    const finalScoreElement = document.getElementById('finalScore');
+    const finalRankElement = document.getElementById('finalRank');
     
-    // Update popup with current score and rank
-    finalScore.textContent = mySnake.points.length;
-    finalRank.textContent = document.getElementById('rankEle').textContent;
+    // Update popup with stored final score and rank
+    finalScoreElement.textContent = mySnake.finalScore || 0;
+    finalRankElement.textContent = mySnake.finalRank || 1;
+    
+    // Pause the game
+    isGamePaused = true;
     
     // Show the popup
     popup.style.display = 'flex';
@@ -213,26 +227,36 @@ function restartGame() {
     // Hide the popup
     hideGameOverPopup();
     
+    // Unpause the game
+    isGamePaused = false;
+    
     // Reset the snake
     const snakeIndex = snakes.indexOf(mySnake);
     if (snakeIndex !== -1) {
         snakes.splice(snakeIndex, 1);
     }
     
-    // Create new snake
+    // Clear dead points before creating new snake
+    Snake.deadPoints = [];
+    
+    // Create new snake at a safe position
     mySnake = new Snake(canvas.width / 2, canvas.height / 2);
     mySnake.ai = false;
     snakes.push(mySnake);
     
+    console.log('You respawned!');
+    
     // Reconnect joypad to new snake
     joypad.connectWith(mySnake);
     
-    // Clear dead points
-    Snake.deadPoints = [];
+    // In multiplayer mode, the server will handle respawn through socket events
+    // No need to manually notify server here
     
     // Reset UI elements
     document.getElementById('scoreEle').textContent = '0';
     document.getElementById('rankEle').textContent = '1';
+    
+    console.log('Game restarted successfully!');
 }
 
 // Add event listener for restart button

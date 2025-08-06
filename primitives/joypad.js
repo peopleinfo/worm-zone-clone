@@ -64,6 +64,7 @@ class Joypad {
 
     handleMouseMove(e) {
         if (this.skipDrawing) return;
+        if (typeof isGamePaused !== 'undefined' && isGamePaused) return; // Prevent input when game is paused
 
         const dX = e.offsetX - this.outer.x;
         const dY = e.offsetY - this.outer.y;
@@ -85,6 +86,7 @@ class Joypad {
 
     handleTouchMove(e) {
         if (this.skipDrawing) return;
+        if (typeof isGamePaused !== 'undefined' && isGamePaused) return; // Prevent input when game is paused
         const { screenX, screenY } = e.touches[0];
 
         const dX = screenX - this.outer.x;

@@ -36,7 +36,6 @@
                 <p>Your Rank: <span id="finalRank">0</span></p>
             </div>
             <button id="restartBtn" class="restart-button">Restart Game</button>
-            <p class="hint-text">Press SPACE to restart quickly</p>
         </div>
     </div>
 
@@ -49,9 +48,8 @@
     <script src="./multiplayer/client.js"></script>
     <script src="./index.js"></script>
     <script>
-        // Initialize multiplayer connection after all scripts are loaded
         window.addEventListener('load', function() {
-            if (typeof isMultiplayer !== 'undefined' && isMultiplayer && typeof multiplayerClient !== 'undefined') {
+            if (isMultiplayer && multiplayerClient) {
                 multiplayerClient.connect();
             }
         });
